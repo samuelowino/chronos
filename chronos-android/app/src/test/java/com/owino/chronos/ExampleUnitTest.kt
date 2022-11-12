@@ -1,4 +1,4 @@
-package com.gummybears.chronos
+package com.owino.chronos
 
 import org.junit.Test
 
