@@ -1,3 +1,15 @@
 <resources>
-    <string name="app_name">chronos-android</string>
+    <string name="app_name">Chronos</string>
+    <string name="general_home">Home</string>
+    <string name="general_trends">Trends</string>
+    <string name="general_hours">Hours</string>
+    <string name="general_reset">Reset Session</string>
+    <string name="general_goal">Goal</string>
+    <string name="general_new_session">New Session</string>
+    <string name="general_let_s_go">Let\'s go!</string>
+    <string name="general_target_session_hours">Target session hours</string>
+    <string name="general_are_you_sure">Are your sure?</string>
+    <string name="invalidate_msg">A reset will invalidate this session and a new session will be created when you are ready</string>
+    <string name="general_give_up">I give up</string>
+    <string name="dont_reset_msg">Don\'t Reset</string>
 </resources>
