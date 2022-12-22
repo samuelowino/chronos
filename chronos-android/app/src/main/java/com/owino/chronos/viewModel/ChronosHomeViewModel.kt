@@ -1,96 +1,113 @@
 package com.owino.chronos.viewModel
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.LiveData
 import com.owino.chronos.ApplicationContext
 import com.owino.chronos.database.dao.ChronosSessionDao
 import com.owino.chronos.database.entities.ChronosSession
+import com.owino.chronos.events.LaunchNewSessionEvent
+import com.owino.chronos.events.SessionLengthUpdatedEvent
+import com.owino.chronos.events.SessionReloadEvent
 import com.owino.chronos.settings.ChronosPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.UUID
+import java.util.*
 
 class ChronosHomeViewModel(private val chronosSessionDao: ChronosSessionDao) {
-    private val TAG = "ChronosHomeViewModel"
     var currentSessionUUID: String? = null
     var chronosSession: ChronosSession? = null
     var allSessions: LiveData<List<ChronosSession>>? = null
 
+    init {
+        EventBus.getDefault().register(this)
+    }
+
     fun increaseSessionHours(context: Context) {
-        var session: ChronosSession? = chronosSession
-        val hours = chronosSession?.completedHours?.inc()
+        var hours = chronosSession?.completedHours?.inc()
 
         loadCoroutineScope(context).launch {
-            currentSessionUUID?.let {
-                hours.let {
-                    chronosSessionDao.updateSessionHours(hours!!, currentSessionUUID!!)
-                }
+            if (currentSessionUUID != null) {
+                if (hours == null) hours = 0
+                chronosSessionDao.updateSessionHours(hours!!, currentSessionUUID!!)
+                loadSession(context)
+            } else {
+                throw AssertionError("Failed to update session, session id is null")
             }
         }
     }
 
     fun reduceSessionHours(context: Context) {
-        var session: ChronosSession? = chronosSession
-        val hours = chronosSession?.completedHours?.minus(1)
-
+        var hours = chronosSession?.completedHours?.minus(1)
         loadCoroutineScope(context).launch {
-            currentSessionUUID?.let {
+            if (currentSessionUUID != null) {
+                if (hours == null) hours = 1
+                if (hours!! < 0) hours = 0
                 chronosSessionDao.updateSessionHours(hours!!, currentSessionUUID!!)
+                loadSession(context)
+            } else {
+                throw AssertionError("Failed to update session, session id is null")
             }
         }
     }
 
-    fun loadSession(context: Context, failedCallback: InitSessionFailedCallback) {
+    fun loadSession(context: Context) {
         loadCoroutineScope(context).launch {
-            chronosSession = currentSessionUUID?.let {
-                chronosSessionDao.findSessionByUuid(it)
+            if (currentSessionUUID != null){
+                chronosSession = chronosSessionDao.findSessionByUuid(currentSessionUUID!!)
+                EventBus.getDefault().post(SessionReloadEvent())
+            } else {
+                throw AssertionError("Failed to update session, session id is null")
             }
-            failedCallback.onSessionSuccess()
-            Log.e(TAG, "loadSession: success " + chronosSession )
-        }
-    }
-
-    fun loadAllSessions(context: Context) {
-        loadCoroutineScope(context).launch {
-            allSessions = chronosSessionDao.findAllSessions()
         }
     }
 
     fun createNewSession(context: Context, targetHours: Int) {
         val formatter = DateTimeFormatter.ISO_DATE_TIME
         val currentDate: String = LocalDateTime.now().format(formatter)
-        val session = ChronosSession(UUID.randomUUID().toString(), currentDate, currentDate, targetHours, 0)
+        val session =
+            ChronosSession(UUID.randomUUID().toString(), currentDate, currentDate, targetHours, 0)
         currentSessionUUID = session.uuid
         loadCoroutineScope(context).launch {
             chronosSessionDao.saveSession(session)
+            ChronosPreferences.setActiveSession(
+                context,
+                currentSessionUUID
+            )
+            loadSession(context)
         }
     }
 
-    fun saveSession(context: Context){
+    fun saveSession(context: Context) {
         loadCoroutineScope(context).launch {
             chronosSessionDao.saveSession(chronosSession!!)
         }
     }
 
-    fun initSession(context: Context, failedCallback: InitSessionFailedCallback) {
+    fun initSession(context: Context) {
         currentSessionUUID = ChronosPreferences.getActiveSession(context)
-        if (currentSessionUUID != null){
-            loadSession(context,failedCallback)
+        if (currentSessionUUID != null) {
+            loadSession(context)
         } else {
-            failedCallback.onSessionInitFailed()
+            EventBus.getDefault().post(LaunchNewSessionEvent())
         }
     }
 
-    fun loadCoroutineScope(context: Context): CoroutineScope{
+    private fun loadCoroutineScope(context: Context): CoroutineScope {
         val applicationContext = context.applicationContext as ApplicationContext
         return applicationContext.getCoroutineScope()
     }
 
-    interface InitSessionFailedCallback {
-        fun onSessionInitFailed()
-        fun onSessionSuccess()
+    @Subscribe
+    public fun sessionLengthUpdatedEvent(event: SessionLengthUpdatedEvent) {
+        loadSession(event.context)
+    }
+
+    fun invalidateCurrentSession(context: Context) {
+        currentSessionUUID = null
+        ChronosPreferences.setActiveSession(context, currentSessionUUID)
     }
 }

@@ -12,4 +12,5 @@
     <string name="invalidate_msg">A reset will invalidate this session and a new session will be created when you are ready</string>
     <string name="general_give_up">I give up</string>
     <string name="dont_reset_msg">Don\'t Reset</string>
+    <string name="general_start_new_session">Start New Session</string>
 </resources>
