@@ -2,7 +2,6 @@ package com.owino.chronos.ui.fragments
 
 import android.app.AlertDialog
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,14 +16,11 @@ import com.owino.chronos.events.SessionReloadEvent
 import com.owino.chronos.settings.ChronosPreferences
 import com.owino.chronos.ui.dialog.NewSessionDialog
 import com.owino.chronos.viewModel.ChronosHomeViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import java.util.*
 
 class HomeFragment : Fragment() {
-    private val TAG = "HomeFragment"
     private lateinit var viewModel: ChronosHomeViewModel
     private lateinit var hoursCountView: TextView
     private lateinit var targetHoursView: TextView
@@ -123,7 +119,7 @@ class HomeFragment : Fragment() {
                 viewModel.createNewSession(requireContext(), targetHours)
             }
         })
-        newSessionDialog!!.show()
+        newSessionDialog?.show()
     }
 
     @Subscribe
@@ -133,24 +129,27 @@ class HomeFragment : Fragment() {
 
     @Subscribe
     public fun onSessionReloadEvent(event: SessionReloadEvent) {
-        Log.e(TAG, "onSessionReloadEvent: session: " + viewModel.chronosSession!! )
-        if (newSessionDialog != null){
-            newSessionDialog!!.dismiss()
+        viewModel.chronosSession?.let {
+            newSessionDialog?.dismiss()
+
+            hoursCountView.text = viewModel.chronosSession?.completedHours.toString()
+            targetHoursView.text = String.format(
+                Locale.getDefault(), "%d %s",
+                viewModel.chronosSession?.targetHours,
+                context?.resources?.getString(R.string.general_hours)
+            )
+
+            viewModel.chronosSession?.let {
+                progressBar.max = it.targetHours
+            }
+
+            viewModel.chronosSession?.let {
+                progressBar.progress = it.completedHours
+            }
         }
 
-        hoursCountView.text = viewModel.chronosSession?.completedHours.toString()
-        targetHoursView.text = String.format(
-            Locale.getDefault(), "%d %s",
-            viewModel.chronosSession?.targetHours,
-            context?.resources?.getString(R.string.general_hours)
-        )
-
-        viewModel.chronosSession?.targetHours.let {
-            progressBar.max = it!!
-        }
-
-        viewModel.chronosSession?.completedHours.let {
-            progressBar.progress = it!!
+        if (viewModel.chronosSession == null){
+            showNewSessionAlertDialog()
         }
     }
 }

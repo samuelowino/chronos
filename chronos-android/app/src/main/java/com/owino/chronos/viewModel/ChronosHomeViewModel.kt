@@ -44,6 +44,7 @@ class ChronosHomeViewModel(private val chronosSessionDao: ChronosSessionDao) {
 
     fun reduceSessionHours(context: Context) {
         var hours = chronosSession?.completedHours?.minus(1)
+
         loadCoroutineScope(context).launch {
             if (currentSessionUUID != null) {
                 if (hours == null) hours = 1
@@ -58,7 +59,7 @@ class ChronosHomeViewModel(private val chronosSessionDao: ChronosSessionDao) {
 
     fun loadSession(context: Context) {
         loadCoroutineScope(context).launch {
-            if (currentSessionUUID != null){
+            if (currentSessionUUID != null) {
                 chronosSession = chronosSessionDao.findSessionByUuid(currentSessionUUID!!)
 
                 withContext(Dispatchers.Main.immediate) {
@@ -72,7 +73,7 @@ class ChronosHomeViewModel(private val chronosSessionDao: ChronosSessionDao) {
     }
 
     fun createNewSession(context: Context, targetHours: Int) {
-        val formatter = DateTimeFormatter.ISO_DATE_TIME
+        val formatter = DateTimeFormatter.ofPattern("EE yyyy MM, dd")
         val currentDate: String = LocalDateTime.now().format(formatter)
         val session =
             ChronosSession(UUID.randomUUID().toString(), currentDate, currentDate, targetHours, 0)
@@ -107,13 +108,13 @@ class ChronosHomeViewModel(private val chronosSessionDao: ChronosSessionDao) {
         return applicationContext.getCoroutineScope()
     }
 
+    fun invalidateCurrentSession(context: Context) {
+        currentSessionUUID = null
+        ChronosPreferences.setActiveSession(context, null)
+    }
+
     @Subscribe
     public fun sessionLengthUpdatedEvent(event: SessionLengthUpdatedEvent) {
         loadSession(event.context)
-    }
-
-    fun invalidateCurrentSession(context: Context) {
-        currentSessionUUID = null
-        ChronosPreferences.setActiveSession(context, currentSessionUUID)
     }
 }

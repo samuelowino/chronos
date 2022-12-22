@@ -17,6 +17,10 @@
         android:layout_height="match_parent">
 
         <com.google.android.material.tabs.TabLayout
+            app:tabBackground="@drawable/tab_selector"
+            app:tabIconTint="@drawable/tab_selector"
+            app:tabIconTintMode="src_atop"
+            app:tabTextColor="@drawable/tab_selector"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 

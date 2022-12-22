@@ -13,4 +13,7 @@
     <string name="general_give_up">I give up</string>
     <string name="dont_reset_msg">Don\'t Reset</string>
     <string name="general_start_new_session">Start New Session</string>
+    <string name="general_session_target_hours">Target Hours</string>
+    <string name="general_coding_hours">Coding Hours</string>
+    <string name="general_delete">Delete</string>
 </resources>
