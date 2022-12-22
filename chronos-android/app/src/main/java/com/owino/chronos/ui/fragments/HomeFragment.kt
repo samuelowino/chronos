@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.owino.chronos.ApplicationContext
@@ -16,6 +17,8 @@ import com.owino.chronos.events.SessionReloadEvent
 import com.owino.chronos.settings.ChronosPreferences
 import com.owino.chronos.ui.dialog.NewSessionDialog
 import com.owino.chronos.viewModel.ChronosHomeViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import java.util.*
@@ -29,6 +32,7 @@ class HomeFragment : Fragment() {
     private lateinit var plusActionView: View
     private lateinit var resetButtonView: View
     private lateinit var startSessionView: View
+    private lateinit var progressBar: ProgressBar
     private var newSessionDialog: NewSessionDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,6 +77,7 @@ class HomeFragment : Fragment() {
         resetButtonView = view.findViewById(R.id.fragment_home_reset_session_button)
         targetHoursView = view.findViewById(R.id.fragment_home_target_hours)
         startSessionView = view.findViewById(R.id.fragment_home_start_session_button)
+        progressBar = view.findViewById(R.id.fragment_home_progress_bar)
 
         plusActionView.setOnClickListener {
             viewModel.increaseSessionHours(requireContext())
@@ -97,6 +102,7 @@ class HomeFragment : Fragment() {
                     viewModel.chronosSession = null
                     hoursCountView.text = 0.toString()
                     targetHoursView.text = 0.toString()
+                    progressBar.progress = 0
                     dialog.dismiss()
                     ChronosPreferences.setActiveSession(requireContext(), null)
                 }
@@ -127,18 +133,24 @@ class HomeFragment : Fragment() {
 
     @Subscribe
     public fun onSessionReloadEvent(event: SessionReloadEvent) {
-        requireActivity().runOnUiThread {
-            Log.e(TAG, "onSessionReloadEvent: session: " + viewModel.chronosSession!! )
-            if (newSessionDialog != null){
-                newSessionDialog!!.dismiss()
-            }
+        Log.e(TAG, "onSessionReloadEvent: session: " + viewModel.chronosSession!! )
+        if (newSessionDialog != null){
+            newSessionDialog!!.dismiss()
+        }
 
-            hoursCountView.text = viewModel.chronosSession?.completedHours.toString()
-            targetHoursView.text = String.format(
-                Locale.getDefault(), "%d %s",
-                viewModel.chronosSession?.targetHours,
-                context?.resources?.getString(R.string.general_hours)
-            )
+        hoursCountView.text = viewModel.chronosSession?.completedHours.toString()
+        targetHoursView.text = String.format(
+            Locale.getDefault(), "%d %s",
+            viewModel.chronosSession?.targetHours,
+            context?.resources?.getString(R.string.general_hours)
+        )
+
+        viewModel.chronosSession?.targetHours.let {
+            progressBar.max = it!!
+        }
+
+        viewModel.chronosSession?.completedHours.let {
+            progressBar.progress = it!!
         }
     }
 }

@@ -10,7 +10,9 @@ import com.owino.chronos.events.SessionLengthUpdatedEvent
 import com.owino.chronos.events.SessionReloadEvent
 import com.owino.chronos.settings.ChronosPreferences
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import java.time.LocalDateTime
@@ -58,7 +60,11 @@ class ChronosHomeViewModel(private val chronosSessionDao: ChronosSessionDao) {
         loadCoroutineScope(context).launch {
             if (currentSessionUUID != null){
                 chronosSession = chronosSessionDao.findSessionByUuid(currentSessionUUID!!)
-                EventBus.getDefault().post(SessionReloadEvent())
+
+                withContext(Dispatchers.Main.immediate) {
+                    EventBus.getDefault().post(SessionReloadEvent())
+                }
+
             } else {
                 throw AssertionError("Failed to update session, session id is null")
             }

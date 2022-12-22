@@ -107,8 +107,9 @@
     </LinearLayout>
 
     <ProgressBar
+        android:id="@+id/fragment_home_progress_bar"
         style="@style/Widget.MaterialComponents.LinearProgressIndicator"
-        android:max="16"
+        android:max="100"
         android:progress="3"
         android:layout_marginStart="12dp"
         android:layout_marginEnd="12dp"

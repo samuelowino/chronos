@@ -14,7 +14,10 @@ class ApplicationContext : MultiDexApplication() {
     private var coroutineScope: CoroutineScope? = null
 
     fun getCoroutineScope(): CoroutineScope {
-        return CoroutineScope(newFixedThreadPool(10).asCoroutineDispatcher())
+        if (coroutineScope == null){
+            coroutineScope = CoroutineScope(newFixedThreadPool(10).asCoroutineDispatcher())
+        }
+        return coroutineScope!!
     }
 
 
