@@ -9,6 +9,7 @@ import com.owino.chronos.events.LaunchNewSessionEvent
 import com.owino.chronos.events.SessionLengthUpdatedEvent
 import com.owino.chronos.events.SessionReloadEvent
 import com.owino.chronos.settings.ChronosPreferences
+import com.owino.chronos.utils.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -73,8 +74,7 @@ class ChronosHomeViewModel(private val chronosSessionDao: ChronosSessionDao) {
     }
 
     fun createNewSession(context: Context, targetHours: Int) {
-        val formatter = DateTimeFormatter.ofPattern("EE yyyy MM, dd")
-        val currentDate: String = LocalDateTime.now().format(formatter)
+        val currentDate: String = LocalDateTime.now().format(Constants.dateTimeFormatter)
         val session =
             ChronosSession(UUID.randomUUID().toString(), currentDate, currentDate, targetHours, 0)
         currentSessionUUID = session.uuid
